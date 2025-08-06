@@ -16,8 +16,8 @@ class PttBleService {
         private const val TAG = "PttBleService"
         
         // PTT BLE Service and Characteristic UUIDs
-        val PTT_SERVICE_UUID: UUID = UUID.fromString("0000B1TC-0000-1000-8000-00805F9B34FB")
-        val PTT_DATA_CHARACTERISTIC_UUID: UUID = UUID.fromString("0000B1TD-0000-1000-8000-00805F9B34FB")
+        val PTT_SERVICE_UUID: UUID = UUID.fromString("0000B1FC-0000-1000-8000-00805F9B34FB")
+        val PTT_DATA_CHARACTERISTIC_UUID: UUID = UUID.fromString("0000B1FD-0000-1000-8000-00805F9B34FB")
         
         // Packet fragmentation constants
         private const val MAX_PACKET_SIZE = 180
