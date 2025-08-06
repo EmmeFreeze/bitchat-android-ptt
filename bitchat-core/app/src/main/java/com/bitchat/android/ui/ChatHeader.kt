@@ -229,7 +229,8 @@ fun ChatHeaderContent(
                 isFavorite = isFavorite,
                 sessionState = sessionState,
                 onBackClick = onBackClick,
-                onToggleFavorite = { viewModel.toggleFavorite(selectedPrivatePeer) }
+                onToggleFavorite = { viewModel.toggleFavorite(selectedPrivatePeer) },
+                onSidebarClick = onSidebarClick
             )
         }
         currentChannel != null -> {
@@ -262,38 +263,54 @@ private fun PrivateChatHeader(
     isFavorite: Boolean,
     sessionState: String?,
     onBackClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onSidebarClick: () -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val peerNickname = peerNicknames[peerID] ?: peerID
     
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Back button - positioned all the way to the left with minimal margin
-        Button(
-            onClick = onBackClick,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = colorScheme.primary
-            ),
-            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp), // Reduced horizontal padding
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = (-8).dp) // Move even further left to minimize margin
+        // Left side buttons row
+        Row(
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            // Back button
+            Button(
+                onClick = onBackClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorScheme.primary
+                ),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                modifier = Modifier.offset(x = (-8).dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(16.dp),
+                        tint = colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "back",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.primary
+                    )
+                }
+            }
+            
+            // Hamburger menu button
+            IconButton(
+                onClick = onSidebarClick,
+                modifier = Modifier.size(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier.size(16.dp),
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open sidebar",
+                    modifier = Modifier.size(18.dp),
                     tint = colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "back",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.primary
                 )
             }
         }
@@ -347,32 +364,47 @@ private fun ChannelHeader(
     val colorScheme = MaterialTheme.colorScheme
     
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Back button - positioned all the way to the left with minimal margin
-        Button(
-            onClick = onBackClick,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = colorScheme.primary
-            ),
-            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp), // Reduced horizontal padding
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = (-8).dp) // Move even further left to minimize margin
+        // Left side buttons row
+        Row(
+            modifier = Modifier.align(Alignment.CenterStart),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            // Back button
+            Button(
+                onClick = onBackClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = colorScheme.primary
+                ),
+                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
+                modifier = Modifier.offset(x = (-8).dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        modifier = Modifier.size(16.dp),
+                        tint = colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "back",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.primary
+                    )
+                }
+            }
+            
+            // Hamburger menu button
+            IconButton(
+                onClick = onSidebarClick,
+                modifier = Modifier.size(32.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier.size(16.dp),
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open sidebar",
+                    modifier = Modifier.size(18.dp),
                     tint = colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "back",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.primary
                 )
             }
         }
@@ -382,9 +414,7 @@ private fun ChannelHeader(
             text = "channel: $channel",
             style = MaterialTheme.typography.titleMedium,
             color = Color(0xFFFF9500), // Orange to match input field
-            modifier = Modifier
-                .align(Alignment.Center)
-                .clickable { onSidebarClick() }
+            modifier = Modifier.align(Alignment.Center)
         )
         
         // Leave button - positioned on the right
@@ -426,6 +456,21 @@ private fun MainHeader(
             modifier = Modifier.fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Hamburger menu button
+            IconButton(
+                onClick = onSidebarClick,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open sidebar",
+                    modifier = Modifier.size(18.dp),
+                    tint = colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(4.dp))
+            
             Text(
                 text = "bitchat/",
                 style = MaterialTheme.typography.headlineSmall,
