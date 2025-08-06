@@ -118,6 +118,7 @@ class AudioManager {
             val recordedData = audioBuffer.copyOf(totalBytesRead)
             
             // DEBUG: Log audio content in base64 for verification (only in debug builds)
+            // Note: Using Log.isLoggable to check if debug logging is enabled
             if (Log.isLoggable(TAG, Log.DEBUG) && recordedData.isNotEmpty()) {
                 val base64Audio = Base64.encodeToString(recordedData, Base64.NO_WRAP)
                 Log.d(TAG, "DEBUG - Recorded audio data (base64): ${base64Audio.take(100)}...")
@@ -167,6 +168,14 @@ class AudioManager {
     suspend fun playAudio(audioData: ByteArray) = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Starting audio playback: ${audioData.size} bytes")
+            
+            // DEBUG: Log playback audio content in base64 for verification (only in debug builds)
+            // Note: Using Log.isLoggable to check if debug logging is enabled
+            if (Log.isLoggable(TAG, Log.DEBUG) && audioData.isNotEmpty()) {
+                val base64Audio = Base64.encodeToString(audioData, Base64.NO_WRAP)
+                Log.d(TAG, "DEBUG - Playback audio data (base64): ${base64Audio.take(100)}...")
+                Log.d(TAG, "DEBUG - Playback duration: ${(audioData.size / 2) / SAMPLE_RATE.toFloat()} seconds")
+            }
             
             val minBufferSize = AudioTrack.getMinBufferSize(
                 SAMPLE_RATE,
