@@ -1,6 +1,7 @@
 package com.bitchat.android.ui
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.AnnotatedString
@@ -32,8 +35,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bitchat.android.R
+import com.bitchat.android.audio.AudioRecordingService
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.withStyle
+import kotlinx.coroutines.launch
+import android.util.Log
 
 /**
  * Input components for ChatScreen
@@ -155,6 +161,7 @@ fun MessageInput(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     onSend: () -> Unit,
+    onAudioRecord: (String) -> Unit,
     selectedPrivatePeer: String?,
     currentChannel: String?,
     nickname: String,
@@ -209,6 +216,65 @@ fun MessageInput(
         }
         
         Spacer(modifier = Modifier.width(8.dp)) // Reduced spacing
+        
+        // PTT (Push-to-Talk) button - always visible
+        val context = LocalContext.current
+        val audioRecordingService = remember { AudioRecordingService(context) }
+        var isRecording by remember { mutableStateOf(false) }
+        val coroutineScope = rememberCoroutineScope()
+        
+        IconButton(
+            modifier = Modifier
+                .size(32.dp)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = {
+                            Log.d("PTT", "🎤 PTT button pressed - starting recording")
+                            isRecording = true
+                            coroutineScope.launch {
+                                audioRecordingService.startRecording()
+                            }
+                        },
+                        onDragEnd = {
+                            Log.d("PTT", "🎤 PTT button released - stopping recording")
+                            isRecording = false
+                            coroutineScope.launch {
+                                val audioData = audioRecordingService.stopRecording()
+                                if (audioData != null) {
+                                    Log.i("PTT", "✅ Audio recorded successfully, sending message")
+                                    onAudioRecord(audioData)
+                                } else {
+                                    Log.e("PTT", "❌ Failed to record audio")
+                                }
+                            }
+                        }
+                    ) { _, _ -> }
+                },
+            onClick = { /* Handled by drag gestures */ }
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(30.dp)
+                    .background(
+                        color = if (isRecording) {
+                            Color(0xFFFF0000) // Red when recording
+                        } else {
+                            Color(0xFF0080FF) // Blue when idle
+                        },
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Mic,
+                    contentDescription = "Hold to record audio",
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.width(4.dp))
         
         // Command quick access button
         if (value.text.isEmpty()) {

@@ -70,6 +70,9 @@ class PermissionManager(private val context: Context) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         }
 
+        // Audio recording permission for PTT
+        permissions.add(Manifest.permission.RECORD_AUDIO)
+
         return permissions
     }
 

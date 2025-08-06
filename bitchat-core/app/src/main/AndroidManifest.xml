@@ -19,6 +19,9 @@
     <!-- Haptic feedback permission -->
     <uses-permission android:name="android.permission.VIBRATE" />
     
+    <!-- Audio recording permission for PTT functionality -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
     <!-- Battery optimization permission -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     
