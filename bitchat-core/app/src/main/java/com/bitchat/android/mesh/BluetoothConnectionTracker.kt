@@ -147,6 +147,22 @@ class BluetoothConnectionTracker(
     }
     
     /**
+     * Get all discovered devices from scan results
+     */
+    fun getDiscoveredDevices(): Map<String, Int> {
+        return scanRSSI.toMap()
+    }
+    
+    /**
+     * Get discovered devices with connection status
+     */
+    fun getDiscoveredDevicesWithStatus(): Map<String, Pair<Int, Boolean>> {
+        return scanRSSI.mapValues { (address, rssi) ->
+            Pair(rssi, connectedDevices.containsKey(address))
+        }
+    }
+    
+    /**
      * Add a subscribed device
      */
     fun addSubscribedDevice(device: BluetoothDevice) {
@@ -341,4 +357,4 @@ class BluetoothConnectionTracker(
             }
         }
     }
-} 
+}  
