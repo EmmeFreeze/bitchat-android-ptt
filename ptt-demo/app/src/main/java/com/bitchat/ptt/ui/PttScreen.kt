@@ -1,7 +1,7 @@
 package com.bitchat.ptt.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -170,16 +170,15 @@ fun PttButton(
                     MaterialTheme.colorScheme.primary
             )
             .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = {
+                detectTapGestures(
+                    onPress = {
                         isCurrentlyPressed = true
                         onPressStart()
-                    },
-                    onDragEnd = {
+                        tryAwaitRelease()
                         isCurrentlyPressed = false
                         onPressEnd()
                     }
-                ) { _, _ -> }
+                )
             },
         contentAlignment = Alignment.Center
     ) {

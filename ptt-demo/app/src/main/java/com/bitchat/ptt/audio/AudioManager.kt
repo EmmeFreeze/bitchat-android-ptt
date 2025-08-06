@@ -90,8 +90,12 @@ class AudioManager {
     fun stopRecording() {
         isRecording = false
         audioRecord?.apply {
-            if (state == AudioRecord.STATE_INITIALIZED) {
-                stop()
+            try {
+                if (state == AudioRecord.STATE_INITIALIZED && recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                    stop()
+                }
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "AudioRecord already stopped", e)
             }
             release()
         }
