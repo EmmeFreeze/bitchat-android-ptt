@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">PTT Demo</string>
+    <string name="ptt_button_text">Hold to Talk</string>
+    <string name="status_idle">Ready</string>
+    <string name="status_recording">Recording...</string>
+    <string name="status_transmitting">Transmitting...</string>
+    <string name="status_receiving">Receiving...</string>
+    <string name="status_playing">Playing...</string>
+    <string name="permission_bluetooth_title">Bluetooth Permission Required</string>
+    <string name="permission_bluetooth_message">This app needs Bluetooth permission to communicate with other devices.</string>
+    <string name="permission_audio_title">Audio Permission Required</string>
+    <string name="permission_audio_message">This app needs microphone permission to record audio messages.</string>
+    <string name="permission_location_title">Location Permission Required</string>
+    <string name="permission_location_message">This app needs location permission to scan for nearby Bluetooth devices.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="connected_devices">Connected: %d</string>
+    <string name="audio_quality">Audio: %s</string>
+    <string name="latency_ms">Latency: %d ms</string>
+</resources>
