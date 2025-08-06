@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import android.util.Base64
 
 class AudioManager {
     
@@ -78,7 +79,19 @@ class AudioManager {
             Log.d(TAG, "Recording completed: $totalBytesRead bytes")
             
             // Return only the actual recorded data
-            audioBuffer.copyOf(totalBytesRead)
+            val recordedData = audioBuffer.copyOf(totalBytesRead)
+            
+            // DEBUG: Log audio content in base64 for verification (only in debug builds)
+            // Note: Using Log.isLoggable to check if debug logging is enabled
+            if (Log.isLoggable(TAG, Log.DEBUG) && recordedData.isNotEmpty()) {
+                val base64Audio = Base64.encodeToString(recordedData, Base64.NO_WRAP)
+                Log.d(TAG, "DEBUG - Recorded audio data (base64): ${base64Audio.take(100)}...")
+                Log.d(TAG, "DEBUG - Audio sample rate: $SAMPLE_RATE Hz, format: 16-bit PCM mono")
+                Log.d(TAG, "DEBUG - Total audio duration: ${(totalBytesRead / 2) / SAMPLE_RATE.toFloat()} seconds")
+                Log.d(TAG, "DEBUG - First 32 bytes (hex): ${recordedData.take(32).joinToString("") { "%02x".format(it) }}")
+            }
+            
+            recordedData
             
         } catch (e: Exception) {
             Log.e(TAG, "Error during recording", e)
@@ -91,21 +104,34 @@ class AudioManager {
         isRecording = false
         audioRecord?.apply {
             try {
+                // Check AudioRecord state before calling stop() to prevent IllegalStateException
                 if (state == AudioRecord.STATE_INITIALIZED && recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                    Log.d(TAG, "Stopping AudioRecord (state: $state, recordingState: $recordingState)")
                     stop()
+                } else {
+                    Log.d(TAG, "AudioRecord not in recording state (state: $state, recordingState: $recordingState)")
                 }
             } catch (e: IllegalStateException) {
+                // Handle edge case where AudioRecord is already stopped
                 Log.w(TAG, "AudioRecord already stopped", e)
             }
             release()
         }
         audioRecord = null
-        Log.d(TAG, "Recording stopped")
+        Log.d(TAG, "Recording stopped and resources released")
     }
     
     suspend fun playAudio(audioData: ByteArray) = withContext(Dispatchers.IO) {
         try {
             Log.d(TAG, "Starting audio playback: ${audioData.size} bytes")
+            
+            // DEBUG: Log playback audio content in base64 for verification (only in debug builds)
+            // Note: Using Log.isLoggable to check if debug logging is enabled
+            if (Log.isLoggable(TAG, Log.DEBUG) && audioData.isNotEmpty()) {
+                val base64Audio = Base64.encodeToString(audioData, Base64.NO_WRAP)
+                Log.d(TAG, "DEBUG - Playback audio data (base64): ${base64Audio.take(100)}...")
+                Log.d(TAG, "DEBUG - Playback duration: ${(audioData.size / 2) / SAMPLE_RATE.toFloat()} seconds")
+            }
             
             val minBufferSize = AudioTrack.getMinBufferSize(
                 SAMPLE_RATE,
