@@ -271,6 +271,30 @@ class ChatViewModel(
         }
     }
     
+    /**
+     * Send audio message (PTT)
+     */
+    fun sendAudioMessage(audioData: String) {
+        Log.i(TAG, "🎤 Sending audio message, data length: ${audioData.length}")
+        
+        val audioMessage = "[AUDIO:${audioData.take(50)}...]"
+        
+        when {
+            state.getSelectedPrivateChatPeerValue() != null -> {
+                Log.d(TAG, "Sending audio as private message")
+                sendMessage(audioMessage)
+            }
+            state.getCurrentChannelValue() != null -> {
+                Log.d(TAG, "Sending audio to channel")
+                sendMessage(audioMessage)
+            }
+            else -> {
+                Log.d(TAG, "Sending audio as public message")
+                sendMessage(audioMessage)
+            }
+        }
+    }
+    
     // MARK: - Utility Functions
     
     fun getPeerIDForNickname(nickname: String): String? {

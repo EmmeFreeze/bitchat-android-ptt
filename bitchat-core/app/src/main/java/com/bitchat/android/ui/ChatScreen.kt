@@ -14,6 +14,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
+import android.util.Log
 
 /**
  * Main ChatScreen - REFACTORED to use component-based architecture
@@ -99,6 +100,10 @@ fun ChatScreen(viewModel: ChatViewModel) {
                         viewModel.sendMessage(messageText.text.trim())
                         messageText = TextFieldValue("")
                     }
+                },
+                onAudioRecord = { audioData ->
+                    Log.i("ChatScreen", "🎤 Received audio data, sending as message")
+                    viewModel.sendAudioMessage(audioData)
                 },
                 showCommandSuggestions = showCommandSuggestions,
                 commandSuggestions = commandSuggestions,
@@ -206,6 +211,7 @@ private fun ChatInputSection(
     messageText: TextFieldValue,
     onMessageTextChange: (TextFieldValue) -> Unit,
     onSend: () -> Unit,
+    onAudioRecord: (String) -> Unit,
     showCommandSuggestions: Boolean,
     commandSuggestions: List<CommandSuggestion>,
     showMentionSuggestions: Boolean,
@@ -250,6 +256,7 @@ private fun ChatInputSection(
                 value = messageText,
                 onValueChange = onMessageTextChange,
                 onSend = onSend,
+                onAudioRecord = onAudioRecord,
                 selectedPrivatePeer = selectedPrivatePeer,
                 currentChannel = currentChannel,
                 nickname = nickname,
