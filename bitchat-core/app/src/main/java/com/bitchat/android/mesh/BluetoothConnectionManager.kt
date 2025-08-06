@@ -35,7 +35,7 @@ class BluetoothConnectionManager(
     
     // Component managers
     private val permissionManager = BluetoothPermissionManager(context)
-    private val connectionTracker = BluetoothConnectionTracker(connectionScope, powerManager)
+    val connectionTracker = BluetoothConnectionTracker(connectionScope, powerManager)
     private val packetBroadcaster = BluetoothPacketBroadcaster(connectionScope, connectionTracker, fragmentManager)
     
     // Delegate for component managers to call back to main manager
@@ -67,6 +67,10 @@ class BluetoothConnectionManager(
         
         override fun onRSSIUpdated(deviceAddress: String, rssi: Int) {
             delegate?.onRSSIUpdated(deviceAddress, rssi)
+        }
+        
+        override fun onDiscoveredDevicesUpdated(devices: Map<String, Pair<Int, Boolean>>) {
+            delegate?.onDiscoveredDevicesUpdated(devices)
         }
     }
     
@@ -140,6 +144,9 @@ class BluetoothConnectionManager(
                     this@BluetoothConnectionManager.isActive = false
                     return@launch
                 }
+                
+                // Start discovered devices updates
+                startDiscoveredDevicesUpdates()
                 
                 Log.i(TAG, "Bluetooth services started successfully")
             }
@@ -254,6 +261,19 @@ class BluetoothConnectionManager(
     }
     
     // MARK: - Private Implementation - All moved to component managers
+    
+    /**
+     * Start periodic updates for discovered devices
+     */
+    private fun startDiscoveredDevicesUpdates() {
+        connectionScope.launch {
+            while (isActive) {
+                delay(5000) // Update every 5 seconds
+                val discoveredDevices = connectionTracker.getDiscoveredDevicesWithStatus()
+                componentDelegate.onDiscoveredDevicesUpdated(discoveredDevices)
+            }
+        }
+    }
 }
 
 /**
@@ -263,4 +283,5 @@ interface BluetoothConnectionManagerDelegate {
     fun onPacketReceived(packet: BitchatPacket, peerID: String, device: BluetoothDevice?)
     fun onDeviceConnected(device: BluetoothDevice)
     fun onRSSIUpdated(deviceAddress: String, rssi: Int)
+    fun onDiscoveredDevicesUpdated(devices: Map<String, Pair<Int, Boolean>>)
 }

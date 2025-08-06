@@ -159,6 +159,10 @@ class MeshDelegateHandler(
         return privateChatManager.isFavorite(peerID)
     }
     
+    override fun didUpdateDiscoveredDevices(devices: Map<String, Pair<Int, Boolean>>) {
+        // This method is handled by ChatViewModel directly, no action needed here
+    }
+    
     /**
      * Send read receipts reactively based on UI focus state.
      * Uses same logic as notification system - send read receipt if user is currently

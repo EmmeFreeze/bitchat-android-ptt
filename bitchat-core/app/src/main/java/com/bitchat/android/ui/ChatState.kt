@@ -18,6 +18,15 @@ data class CommandSuggestion(
     val description: String
 )
 
+data class DiscoveredDevice(
+    val deviceAddress: String,
+    val rssi: Int,
+    val lastSeen: Long = System.currentTimeMillis(),
+    val isConnected: Boolean = false,
+    val recognizedNickname: String? = null,
+    val fingerprint: String? = null
+)
+
 /**
  * Contains all the observable state for the chat system
  */
@@ -104,6 +113,9 @@ class ChatState {
     private val _peerRSSI = MutableLiveData<Map<String, Int>>(emptyMap())
     val peerRSSI: LiveData<Map<String, Int>> = _peerRSSI
     
+    private val _discoveredDevices = MutableLiveData<Map<String, DiscoveredDevice>>(emptyMap())
+    val discoveredDevices: LiveData<Map<String, DiscoveredDevice>> = _discoveredDevices
+    
     // peerIDToPublicKeyFingerprint REMOVED - fingerprints now handled centrally in PeerManager
     
     // Navigation state
@@ -148,6 +160,7 @@ class ChatState {
     fun getPeerSessionStatesValue() = _peerSessionStates.value ?: emptyMap()
     fun getPeerFingerprintsValue() = _peerFingerprints.value ?: emptyMap()
     fun getShowAppInfoValue() = _showAppInfo.value ?: false
+    fun getDiscoveredDevicesValue() = _discoveredDevices.value ?: emptyMap()
     
     // Setters for state updates
     fun setMessages(messages: List<BitchatMessage>) {
@@ -254,6 +267,10 @@ class ChatState {
 
     fun setPeerRSSI(rssi: Map<String, Int>) {
         _peerRSSI.value = rssi
+    }
+    
+    fun setDiscoveredDevices(devices: Map<String, DiscoveredDevice>) {
+        _discoveredDevices.value = devices
     }
     
     fun setShowAppInfo(show: Boolean) {

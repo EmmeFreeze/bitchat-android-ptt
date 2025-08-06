@@ -18,6 +18,8 @@
     <string name="no_one_connected">No one connected</string>
     <string name="emergency_clear_hint">Triple tap to clear all data</string>
     <string name="your_network">Network</string>
+    <string name="network_hosts">Host Rete</string>
+    <string name="no_hosts_discovered">Nessun host scoperto</string>
     
     <!-- Battery Optimization Strings -->
     <string name="battery_optimization_detected">Battery Optimization Detected</string>
