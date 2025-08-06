@@ -45,6 +45,7 @@ fun SidebarOverlay(
     val unreadChannelMessages by viewModel.unreadChannelMessages.observeAsState(emptyMap())
     val peerNicknames by viewModel.peerNicknames.observeAsState(emptyMap())
     val peerRSSI by viewModel.peerRSSI.observeAsState(emptyMap())
+    val discoveredDevices by viewModel.discoveredDevices.observeAsState(emptyMap())
 
     Box(
         modifier = modifier
@@ -122,8 +123,120 @@ fun SidebarOverlay(
                             }
                         )
                     }
+                    
+                    // Network Hosts section
+                    item {
+                        NetworkHostsSection(
+                            discoveredDevices = discoveredDevices,
+                            connectedPeers = connectedPeers,
+                            colorScheme = colorScheme,
+                            onDeviceClick = { deviceAddress ->
+                                Log.d("SidebarComponents", "Clicked on discovered device: $deviceAddress")
+                            }
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun NetworkHostsSection(
+    discoveredDevices: Map<String, DiscoveredDevice>,
+    connectedPeers: List<String>,
+    colorScheme: ColorScheme,
+    onDeviceClick: (String) -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Wifi,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "HOST RETE",
+                style = MaterialTheme.typography.labelSmall,
+                color = colorScheme.onSurface.copy(alpha = 0.6f),
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        if (discoveredDevices.isEmpty()) {
+            Text(
+                text = "Nessun host scoperto",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurface.copy(alpha = 0.5f),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+        } else {
+            val sortedDevices = discoveredDevices.values.sortedWith(
+                compareBy<DiscoveredDevice> { !it.isConnected }
+                .thenByDescending { it.rssi }
+            )
+            
+            sortedDevices.forEach { device ->
+                NetworkHostItem(
+                    device = device,
+                    colorScheme = colorScheme,
+                    onItemClick = { onDeviceClick(device.deviceAddress) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NetworkHostItem(
+    device: DiscoveredDevice,
+    colorScheme: ColorScheme,
+    onItemClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onItemClick() }
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (device.isConnected) Icons.Filled.Link else Icons.Outlined.LinkOff,
+            contentDescription = if (device.isConnected) "Connesso" else "Scoperto",
+            modifier = Modifier.size(16.dp),
+            tint = if (device.isConnected) Color(0xFF00C851) else Color(0xFF878787)
+        )
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        SignalStrengthIndicator(
+            signalStrength = convertRSSIToSignalStrength(device.rssi),
+            colorScheme = colorScheme
+        )
+        
+        Spacer(modifier = Modifier.width(8.dp))
+        
+        Text(
+            text = device.recognizedNickname ?: device.deviceAddress.takeLast(8),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        
+        if (device.recognizedNickname != null) {
+            Icon(
+                imageVector = Icons.Filled.Verified,
+                contentDescription = "Dispositivo riconosciuto",
+                modifier = Modifier.size(14.dp),
+                tint = Color(0xFF0080FF)
+            )
         }
     }
 }

@@ -401,6 +401,10 @@ class BluetoothMeshService(private val context: Context) {
                     peerManager.updatePeerRSSI(peerID, rssi)
                 }
             }
+            
+            override fun onDiscoveredDevicesUpdated(devices: Map<String, Pair<Int, Boolean>>) {
+                delegate?.didUpdateDiscoveredDevices(devices)
+            }
         }
     }
     
@@ -1013,6 +1017,13 @@ class BluetoothMeshService(private val context: Context) {
             Log.e(TAG, "❌ Error clearing encryption data: ${e.message}")
         }
     }
+    
+    /**
+     * Get discovered devices from scan results
+     */
+    fun getDiscoveredDevices(): Map<String, Pair<Int, Boolean>> {
+        return connectionManager.connectionTracker.getDiscoveredDevicesWithStatus()
+    }
 }
 
 /**
@@ -1029,5 +1040,6 @@ interface BluetoothMeshDelegate {
     fun decryptChannelMessage(encryptedContent: ByteArray, channel: String): String?
     fun getNickname(): String?
     fun isFavorite(peerID: String): Boolean
+    fun didUpdateDiscoveredDevices(devices: Map<String, Pair<Int, Boolean>>)
     // registerPeerPublicKey REMOVED - fingerprints now handled centrally in PeerManager
 }

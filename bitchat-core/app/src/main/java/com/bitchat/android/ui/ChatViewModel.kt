@@ -91,6 +91,7 @@ class ChatViewModel(
     val peerNicknames: LiveData<Map<String, String>> = state.peerNicknames
     val peerRSSI: LiveData<Map<String, Int>> = state.peerRSSI
     val showAppInfo: LiveData<Boolean> = state.showAppInfo
+    val discoveredDevices: LiveData<Map<String, DiscoveredDevice>> = state.discoveredDevices
     
     init {
         // Note: Mesh service delegate is now set by MainActivity
@@ -534,6 +535,26 @@ class ChatViewModel(
             }
             // No special navigation state - let system handle (usually exits app)
             else -> false
+        }
+    }
+    
+    override fun didUpdateDiscoveredDevices(devices: Map<String, Pair<Int, Boolean>>) {
+        viewModelScope.launch {
+            val discoveredDevices = devices.map { (address, data) ->
+                val (rssi, isConnected) = data
+                // For now, use simplified device recognition - just show device address
+                // TODO: Implement proper fingerprint-based recognition
+                
+                address to DiscoveredDevice(
+                    deviceAddress = address,
+                    rssi = rssi,
+                    isConnected = isConnected,
+                    recognizedNickname = null, // Will be enhanced later with proper fingerprint lookup
+                    fingerprint = null
+                )
+            }.toMap()
+            
+            state.setDiscoveredDevices(discoveredDevices)
         }
     }
 }
