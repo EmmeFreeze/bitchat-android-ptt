@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import android.util.Base64
 
 class AudioManager {
     
@@ -49,6 +50,13 @@ class AudioManager {
             }
             
             audioRecord?.startRecording()
+            
+            // Verify AudioRecord is actually recording
+            if (audioRecord?.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+                throw RuntimeException("AudioRecord failed to start recording (state: ${audioRecord?.state}, recordingState: ${audioRecord?.recordingState})")
+            }
+            
+            Log.d(TAG, "AudioRecord started successfully (state: ${audioRecord?.state}, recordingState: ${audioRecord?.recordingState})")
             isRecording = true
             
             val maxSamples = (SAMPLE_RATE * MAX_RECORDING_DURATION_MS / 1000)
@@ -66,10 +74,39 @@ class AudioManager {
                 }
                 
                 val bytesRead = audioRecord?.read(tempBuffer, 0, tempBuffer.size) ?: 0
-                if (bytesRead > 0) {
-                    val bytesToCopy = minOf(bytesRead, audioBuffer.size - totalBytesRead)
-                    System.arraycopy(tempBuffer, 0, audioBuffer, totalBytesRead, bytesToCopy)
-                    totalBytesRead += bytesToCopy
+                
+                // Handle AudioRecord.read() error codes
+                when {
+                    bytesRead == AudioRecord.ERROR_INVALID_OPERATION -> {
+                        Log.e(TAG, "AudioRecord.read() ERROR_INVALID_OPERATION")
+                        break
+                    }
+                    bytesRead == AudioRecord.ERROR_BAD_VALUE -> {
+                        Log.e(TAG, "AudioRecord.read() ERROR_BAD_VALUE")
+                        break
+                    }
+                    bytesRead == AudioRecord.ERROR_DEAD_OBJECT -> {
+                        Log.e(TAG, "AudioRecord.read() ERROR_DEAD_OBJECT")
+                        break
+                    }
+                    bytesRead == AudioRecord.ERROR -> {
+                        Log.e(TAG, "AudioRecord.read() generic ERROR")
+                        break
+                    }
+                    bytesRead > 0 -> {
+                        val bytesToCopy = minOf(bytesRead, audioBuffer.size - totalBytesRead)
+                        System.arraycopy(tempBuffer, 0, audioBuffer, totalBytesRead, bytesToCopy)
+                        totalBytesRead += bytesToCopy
+                        
+                        // DEBUG: Log first few bytes to verify we're getting real audio data
+                        if (Log.isLoggable(TAG, Log.DEBUG) && totalBytesRead <= 32) {
+                            val firstBytes = tempBuffer.take(minOf(16, bytesRead)).joinToString("") { "%02x".format(it) }
+                            Log.d(TAG, "DEBUG - Read $bytesRead bytes, first 16 bytes (hex): $firstBytes")
+                        }
+                    }
+                    else -> {
+                        Log.w(TAG, "AudioRecord.read() returned $bytesRead bytes")
+                    }
                 }
             }
             
@@ -78,7 +115,26 @@ class AudioManager {
             Log.d(TAG, "Recording completed: $totalBytesRead bytes")
             
             // Return only the actual recorded data
-            audioBuffer.copyOf(totalBytesRead)
+            val recordedData = audioBuffer.copyOf(totalBytesRead)
+            
+            // DEBUG: Log audio content in base64 for verification (only in debug builds)
+            if (Log.isLoggable(TAG, Log.DEBUG) && recordedData.isNotEmpty()) {
+                val base64Audio = Base64.encodeToString(recordedData, Base64.NO_WRAP)
+                Log.d(TAG, "DEBUG - Recorded audio data (base64): ${base64Audio.take(100)}...")
+                Log.d(TAG, "DEBUG - Audio sample rate: $SAMPLE_RATE Hz, format: 16-bit PCM mono")
+                Log.d(TAG, "DEBUG - Total audio duration: ${(totalBytesRead / 2) / SAMPLE_RATE.toFloat()} seconds")
+                Log.d(TAG, "DEBUG - First 32 bytes (hex): ${recordedData.take(32).joinToString("") { "%02x".format(it) }}")
+                
+                // Check if audio data is all zeros (silence)
+                val nonZeroBytes = recordedData.count { it != 0.toByte() }
+                Log.d(TAG, "DEBUG - Non-zero bytes: $nonZeroBytes / ${recordedData.size} (${(nonZeroBytes * 100.0 / recordedData.size).toInt()}%)")
+                
+                if (nonZeroBytes == 0) {
+                    Log.w(TAG, "WARNING - Recorded audio is all zeros! Check microphone permissions and hardware.")
+                }
+            }
+            
+            recordedData
             
         } catch (e: Exception) {
             Log.e(TAG, "Error during recording", e)
@@ -90,13 +146,22 @@ class AudioManager {
     fun stopRecording() {
         isRecording = false
         audioRecord?.apply {
-            if (state == AudioRecord.STATE_INITIALIZED) {
-                stop()
+            try {
+                // Check AudioRecord state before calling stop() to prevent IllegalStateException
+                if (state == AudioRecord.STATE_INITIALIZED && recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+                    Log.d(TAG, "Stopping AudioRecord (state: $state, recordingState: $recordingState)")
+                    stop()
+                } else {
+                    Log.d(TAG, "AudioRecord not in recording state (state: $state, recordingState: $recordingState)")
+                }
+            } catch (e: IllegalStateException) {
+                // Handle edge case where AudioRecord is already stopped
+                Log.w(TAG, "AudioRecord already stopped", e)
             }
             release()
         }
         audioRecord = null
-        Log.d(TAG, "Recording stopped")
+        Log.d(TAG, "Recording stopped and resources released")
     }
     
     suspend fun playAudio(audioData: ByteArray) = withContext(Dispatchers.IO) {
